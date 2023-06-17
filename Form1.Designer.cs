@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Data;
+using System.Globalization;
 using System.Linq.Expressions;
 using System.Windows.Forms;
 
@@ -331,8 +332,9 @@ namespace Calc
         }
 
         private void buttonDigitClick(object sender, EventArgs e) {
-            if (numBox.Text == "0" || isLabeling) {
+            if (numBox.Text == "0" || isLabeling || label.Text.IndexOf('=') > -1) {
                 numBox.Clear();
+                //label.Text = "";
             }
             if (numBox.Text.Length != 16) {
                 numBox.Text += (sender as Button).Text;
@@ -365,17 +367,36 @@ namespace Calc
         }
 
         private void buttonOpClick(object sender, EventArgs e) {
-            if (label.Text.Length == 0 || isLabeling) {
+            if (label.Text.Length == 0 || isLabeling || label.Text.IndexOf('=') > -1) {
                 label.Text = numBox.Text + " " + (sender as Button).Text;
                 isLabeling = true;
+            }
+            if (!isLabeling && label.Text.IndexOf('=') == -1) {
+                NumberFormatInfo format = new NumberFormatInfo();
+                format.NumberGroupSeparator = ",";
+                format.NumberDecimalSeparator = ".";
+                label.Text = ((Convert.ToDouble((new DataTable().Compute(label.Text + numBox.Text, null)), format)).ToString(format)) + " " + (sender as Button).Text;
+                numBox.Text = "0";
             }
         }
 
         private void buttonEqualsClick(object sender, EventArgs e) {
             if (label.Text.IndexOf('=') == -1) {
                 label.Text += " " + numBox.Text;
+                NumberFormatInfo format = new NumberFormatInfo();
+                format.NumberGroupSeparator = ",";
+                format.NumberDecimalSeparator = ".";
+                numBox.Text = ((Convert.ToDouble((new DataTable().Compute(label.Text, null)), format)).ToString(format));
+                if (numBox.Text == "Infinity" || numBox.Text == "NaN") {
+                    numBox.Text = "DIVISION BY ZERO";
+                    isLabeling = false;
+                }
+                label.Text += " =";
+            }
+            else { 
+
+            }
 	    }
-	}
             
         private bool isLabeling = false;
 
